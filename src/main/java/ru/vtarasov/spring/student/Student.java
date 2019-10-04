@@ -1,15 +1,18 @@
 package ru.vtarasov.spring.student;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * @author vtarasov
@@ -20,13 +23,16 @@ import lombok.RequiredArgsConstructor;
 @EqualsAndHashCode(of = "id")
 @Builder(toBuilder = true, builderMethodName = "")
 @Getter
+@Entity
 public class Student {
     private Student() {
         name = null;
         age = null;
     }
 
-    @Null
+    @Id
+    @GeneratedValue(generator = StringIdGenerator.GENERATOR)
+    @GenericGenerator(name = StringIdGenerator.GENERATOR, strategy = StringIdGenerator.STRATEGY)
     private String id;
 
     @NotEmpty

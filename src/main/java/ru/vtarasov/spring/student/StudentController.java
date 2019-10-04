@@ -26,6 +26,9 @@ public class StudentController {
     @RequiredArgsConstructor
     private final class StudentNotFoundException extends Exception {}
 
+    @RequiredArgsConstructor
+    private final class IdNotNullException extends Exception {}
+
     @Autowired
     private StudentRegistrationService service;
 
@@ -35,7 +38,10 @@ public class StudentController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity post(@Valid @RequestBody Student student) {
+    public ResponseEntity post(@Valid @RequestBody Student student) throws IdNotNullException {
+        if (student.getId() != null) {
+            throw new IdNotNullException();
+        }
         student = service.register(student);
         return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest().path("/" + student.getId()).build().toUri()).build();
     }
@@ -50,5 +56,10 @@ public class StudentController {
     @ExceptionHandler(StudentNotFoundException.class)
     private ResponseEntity handleNotFound(StudentNotFoundException e) {
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(IdNotNullException.class)
+    private ResponseEntity handleIdNotNull(IdNotNullException e) {
+        return ResponseEntity.badRequest().build();
     }
 }

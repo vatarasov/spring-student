@@ -1,13 +1,9 @@
 package ru.vtarasov.spring.student;
 
-import java.util.Optional;
+import org.springframework.data.repository.CrudRepository;
 
 /**
  * @author vtarasov
- * @since 21.09.2019
+ * @since 04.10.2019
  */
-public interface StudentRepository {
-    Optional<Student> get(String id);
-    void delete(String id);
-    Student save(Student student);
-}
+public interface StudentRepository extends CrudRepository<Student, String> {}

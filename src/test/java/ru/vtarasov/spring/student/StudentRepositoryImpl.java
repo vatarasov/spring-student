@@ -15,12 +15,12 @@ public class StudentRepositoryImpl implements StudentRepository {
     private Map<String, Student> students = new ConcurrentHashMap<>();
 
     @Override
-    public Optional<Student> get(String id) {
+    public Optional<Student> findById(String id) {
         return Optional.ofNullable(students.get(id));
     }
 
     @Override
-    public void delete(String id) {
+    public void deleteById(String id) {
         students.remove(id);
     }
 
@@ -29,5 +29,45 @@ public class StudentRepositoryImpl implements StudentRepository {
         Student registered = student.toBuilder().id(UUID.randomUUID().toString()).build();
         students.put(registered.getId(), registered);
         return registered;
+    }
+
+    @Override
+    public <S extends Student> Iterable<S> saveAll(Iterable<S> entities) {
+        return null;
+    }
+
+    @Override
+    public boolean existsById(String s) {
+        return false;
+    }
+
+    @Override
+    public Iterable<Student> findAll() {
+        return null;
+    }
+
+    @Override
+    public Iterable<Student> findAllById(Iterable<String> strings) {
+        return null;
+    }
+
+    @Override
+    public long count() {
+        return 0;
+    }
+
+    @Override
+    public void delete(Student entity) {
+
+    }
+
+    @Override
+    public void deleteAll(Iterable<? extends Student> entities) {
+
+    }
+
+    @Override
+    public void deleteAll() {
+
     }
 }
