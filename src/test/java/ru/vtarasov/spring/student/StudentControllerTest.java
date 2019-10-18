@@ -8,8 +8,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
@@ -35,6 +37,7 @@ import ru.vtarasov.spring.student.StudentControllerTest.StudentControllerTestCon
 public class StudentControllerTest {
     @Configuration
     @EnableWebMvc
+    @PropertySource("classpath:application-test.properties")
     public static class StudentControllerTestConfiguration {
         @Bean
         public StudentRegistrationService studentRegistrationService() {
@@ -47,6 +50,12 @@ public class StudentControllerTest {
 
     @Autowired
     private StudentRegistrationService studentRegistrationService;
+
+    @Value("${spring.security.wrong-user.name}")
+    private String wrongName;
+
+    @Value("${spring.security.wrong-user.password}")
+    private String wrongPassword;
 
     private MockMvc mvc;
 
@@ -184,5 +193,63 @@ public class StudentControllerTest {
         mvc
             .perform(MockMvcRequestBuilders.delete("/student/{id}", "id-not-registered"))
             .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenTryingToFindStudentWithNoOrWrongCredentials() throws Exception {
+        MockMvc mvc = mockMvcWithoutDefaultAuth();
+
+        mvc
+            .perform(MockMvcRequestBuilders.get("/student/{id}", "id-registered"))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+
+        mvc
+            .perform(MockMvcRequestBuilders
+                .get("/student/{id}", "id-registered")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(wrongName, wrongPassword)))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenTryingToRegisterStudentWithNoOrWrongCredentials() throws Exception {
+        Mockito.when(studentRegistrationService.register(notRegisteredStudent)).thenReturn(registeredStudent);
+
+        MockMvc mvc = mockMvcWithoutDefaultAuth();
+
+        mvc
+            .perform(MockMvcRequestBuilders
+                .post("/student")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notRegisteredStudent)))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+
+        mvc
+            .perform(MockMvcRequestBuilders
+                .post("/student")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(wrongName, wrongPassword))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notRegisteredStudent)))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenTryingToUnregisterStudentWithNoOrWrongCredentials() throws Exception {
+        MockMvc mvc = mockMvcWithoutDefaultAuth();
+
+        mvc
+            .perform(MockMvcRequestBuilders.delete("/student/{id}", "id-registered"))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+
+        mvc
+            .perform(MockMvcRequestBuilders.delete("/student/{id}", "id-registered")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic(wrongName, wrongPassword)))
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    private MockMvc mockMvcWithoutDefaultAuth() {
+        return MockMvcBuilders
+            .webAppContextSetup(this.wac)
+            .apply(SecurityMockMvcConfigurers.springSecurity())
+            .build();
     }
 }
