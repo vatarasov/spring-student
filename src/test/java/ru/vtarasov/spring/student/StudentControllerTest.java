@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -28,7 +30,7 @@ import ru.vtarasov.spring.student.StudentControllerTest.StudentControllerTestCon
  * @since 27.09.2019
  */
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = { StudentController.class, StudentControllerTestConfiguration.class })
+@ContextConfiguration(classes = { StudentController.class, StudentControllerTestConfiguration.class, StudentSecurityConfiguration.class })
 @WebAppConfiguration
 public class StudentControllerTest {
     @Configuration
@@ -55,7 +57,12 @@ public class StudentControllerTest {
 
     @Before
     public void setUp() {
-        mvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+        mvc = MockMvcBuilders
+            .webAppContextSetup(this.wac)
+            .apply(SecurityMockMvcConfigurers.springSecurity())
+            .defaultRequest(MockMvcRequestBuilders.get("/")
+                .with(SecurityMockMvcRequestPostProcessors.httpBasic("user", "user")))
+            .build();
 
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
